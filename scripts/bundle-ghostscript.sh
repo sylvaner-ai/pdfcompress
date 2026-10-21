@@ -29,8 +29,21 @@ for d in lib iccprofiles; do
 done
 if [ -d "$VERSION_DIR/../fonts" ]; then cp -RL "$VERSION_DIR/../fonts" "$DEST/"; fi
 
-# Copie libgs et ses dépendances, et réécrit leurs chemins relativement à l'exécutable.
-dylibbundler -of -b -x "$BIN" -d "$FRAMEWORKS" -p "@executable_path/../Frameworks/" -s "$(brew --prefix)/lib" -s "$PREFIX/lib"
+# Copie libgs dans Contents/Frameworks et y fait pointer l'exécutable. dylibbundler n'est pas
+# appliqué à l'exécutable lui-même : il réécrirait ses LC_RPATH Swift en doublon, ce que dyld refuse.
+LIBGS_REF="$(otool -L "$BIN" | awk '/libgs\./ {print $1; exit}')"
+if [ -z "$LIBGS_REF" ]; then
+  echo "L'exécutable n'est pas lié à libgs" >&2
+  exit 1
+fi
+LIBGS_NAME="$(basename "$(realpath "$LIBGS_REF")")"
+cp -fL "$LIBGS_REF" "$FRAMEWORKS/$LIBGS_NAME"
+chmod u+w "$FRAMEWORKS/$LIBGS_NAME"
+install_name_tool -id "@executable_path/../Frameworks/$LIBGS_NAME" "$FRAMEWORKS/$LIBGS_NAME"
+install_name_tool -change "$LIBGS_REF" "@executable_path/../Frameworks/$LIBGS_NAME" "$BIN"
+
+# Copie les dépendances de libgs et réécrit leurs chemins relativement à l'exécutable.
+dylibbundler -of -b -x "$FRAMEWORKS/$LIBGS_NAME" -d "$FRAMEWORKS" -p "@executable_path/../Frameworks/" -s "$(brew --prefix)/lib" -s "$PREFIX/lib"
 
 # Signature ad hoc provisoire (obligatoire sur puce Apple) ; la signature Developer ID la remplace.
 codesign --force --sign - "$FRAMEWORKS"/*.dylib

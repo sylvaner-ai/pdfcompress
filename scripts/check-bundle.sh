@@ -15,6 +15,15 @@ if otool -L "$APP/Contents/MacOS/PDF Compress" "$FRAMEWORKS"/*.dylib | grep -E '
   exit 1
 fi
 
+# dyld refuse de charger un binaire dont un LC_RPATH apparaît deux fois.
+for f in "$APP/Contents/MacOS/PDF Compress" "$FRAMEWORKS"/*.dylib; do
+  DUP="$(otool -l "$f" | awk '/cmd LC_RPATH/ {getline; getline; print $2}' | sort | uniq -d)"
+  if [ -n "$DUP" ]; then
+    echo "LC_RPATH en double dans $f : $DUP" >&2
+    exit 1
+  fi
+done
+
 # Le programme de test retrouve la libgs embarquée par le même chemin que l'application.
 mkdir -p "$WORK/MacOS"
 ln -s "$FRAMEWORKS" "$WORK/Frameworks"
@@ -32,3 +41,15 @@ mv "$CELLAR" "$CELLAR.hidden"
 trap 'mv "$CELLAR.hidden" "$CELLAR"' EXIT
 
 "$WORK/MacOS/selftest" "$WORK/test.pdf" "$APP/Contents/Resources/gs"
+
+# L'application elle-même doit démarrer (chargement par dyld, signature, interface).
+"$APP/Contents/MacOS/PDF Compress" > "$WORK/app.log" 2>&1 &
+PID=$!
+sleep 8
+if ! kill -0 "$PID" 2>/dev/null; then
+  echo "L'application s'est arrêtée au démarrage :" >&2
+  cat "$WORK/app.log" >&2
+  exit 1
+fi
+kill "$PID"
+echo "L'application démarre."
