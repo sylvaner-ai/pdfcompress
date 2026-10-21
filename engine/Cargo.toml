@@ -1,0 +1,18 @@
+[package]
+name = "pdfcompress-engine"
+version = "2.0.0"
+description = "Moteur de compression PDF (Ghostscript en bibliothèque) appelé depuis l'application SwiftUI"
+edition = "2021"
+rust-version = "1.80"
+publish = false
+
+[lib]
+name = "pdfcompress_engine"
+# staticlib : liée à l'application Swift ; rlib : tests Rust.
+crate-type = ["staticlib", "rlib"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
