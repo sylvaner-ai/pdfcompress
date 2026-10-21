@@ -18,7 +18,8 @@
         "minHeight": 420,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
-        "dragDropEnabled": true
+        "dragDropEnabled": true,
+        "visible": false
       }
     ],
     "security": {
@@ -27,7 +28,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
+    "targets": [
+      "app",
+      "dmg"
+    ],
     "category": "Productivity",
     "icon": [
       "icons/32x32.png",
@@ -39,6 +43,20 @@
     "macOS": {
       "minimumSystemVersion": "11.0",
       "signingIdentity": "-"
-    }
+    },
+    "fileAssociations": [
+      {
+        "ext": [
+          "pdf"
+        ],
+        "contentTypes": [
+          "com.adobe.pdf"
+        ],
+        "mimeType": "application/pdf",
+        "name": "PDF",
+        "role": "Viewer",
+        "rank": "None"
+      }
+    ]
   }
 }

@@ -1,5 +1,6 @@
 const { invoke } = window.__TAURI__.core;
 const { getCurrentWebview } = window.__TAURI__.webview;
+const { listen } = window.__TAURI__.event;
 
 const PRESETS = {
   strong: { dpi: 100, quality: 50 },
@@ -133,6 +134,9 @@ getCurrentWebview().onDragDropEvent((event) => {
     dropZone.classList.remove("active");
   }
 });
+
+// PDF déposés sur l'icône du Dock (ou via l'Action rapide) pendant que la fenêtre est ouverte.
+listen("files-opened", (event) => handleDrop(event.payload));
 
 // ---------- Préférences ----------
 
