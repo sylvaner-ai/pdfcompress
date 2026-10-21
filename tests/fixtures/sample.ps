@@ -1,0 +1,25 @@
+%!PS
+% Page de test : une image « photographique » de 1500 x 1500 pixels et du texte.
+<< /PageSize [612 792] >> setpagedevice
+/W 1500 def /H 1500 def
+/row W 3 mul string def
+/clamp { dup 0 lt { pop 0 } if dup 255 gt { pop 255 } if cvi } def
+/y 0 def
+/Helvetica findfont 24 scalefont setfont
+72 720 moveto (PDF Compress - page de test) show
+gsave
+36 120 translate 540 540 scale
+W H 8 [W 0 0 H neg 0 H]
+{
+  0 1 W 1 sub {
+    /x exch def
+    row x 3 mul       x 0.31 mul y 0.17 mul add sin 100 mul 128 add rand 24 mod add clamp put
+    row x 3 mul 1 add x 0.11 mul y 0.29 mul sub cos 90 mul 128 add rand 24 mod add clamp put
+    row x 3 mul 2 add x y add 0.07 mul sin 110 mul 128 add rand 24 mod add clamp put
+  } for
+  /y y 1 add def
+  row
+}
+false 3 colorimage
+grestore
+showpage
