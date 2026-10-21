@@ -1,7 +1,6 @@
 import AppIntents
 import SwiftUI
 
-@main
 struct PDFCompressApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var model = CompressionModel.shared

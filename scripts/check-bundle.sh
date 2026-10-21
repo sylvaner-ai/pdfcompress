@@ -35,12 +35,21 @@ clang -I "$ROOT/engine/include" "$ROOT/engine/tests/selftest.c" \
 # PDF de test produit avec le Ghostscript de Homebrew, avant de le masquer.
 gs -q -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dAutoFilterColorImages=false -dColorImageFilter=/FlateEncode \
   -sOutputFile="$WORK/test.pdf" "$ROOT/engine/tests/fixtures/sample.ps"
+mkdir -p "$WORK/dossier avec espaces"
+cp "$WORK/test.pdf" "$WORK/dossier avec espaces/copie été.pdf"
 
 CELLAR="$(brew --cellar ghostscript)"
 mv "$CELLAR" "$CELLAR.hidden"
 trap 'mv "$CELLAR.hidden" "$CELLAR"' EXIT
 
 "$WORK/MacOS/selftest" "$WORK/test.pdf" "$APP/Contents/Resources/gs"
+
+# Mode ligne de commande de l'application (utilisé par l'Action rapide du Finder).
+BEFORE=$(stat -f%z "$WORK/dossier avec espaces/copie été.pdf")
+"$APP/Contents/MacOS/PDF Compress" --compress "$WORK/dossier avec espaces"
+AFTER=$(stat -f%z "$WORK/dossier avec espaces/copie été.pdf")
+echo "Ligne de commande : $BEFORE -> $AFTER octets"
+test "$AFTER" -lt "$BEFORE"
 
 # L'application elle-même doit démarrer (chargement par dyld, signature, interface).
 "$APP/Contents/MacOS/PDF Compress" > "$WORK/app.log" 2>&1 &
