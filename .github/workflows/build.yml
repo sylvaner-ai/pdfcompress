@@ -1,0 +1,52 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Tests du moteur
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dépendances système
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ghostscript libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: cargo test
+        working-directory: src-tauri
+
+  macos:
+    name: Application macOS
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: brew install ghostscript dylibbundler
+      - run: npm ci
+      - name: Préparer Ghostscript embarqué
+        run: scripts/bundle-ghostscript.sh
+      - name: Construire l'application
+        run: npm run tauri build -- --config "$PWD/src-tauri/tauri.bundle-gs.conf.json"
+      - name: Vérifier Ghostscript dans l'application (sans Homebrew)
+        run: scripts/check-bundled-gs.sh "src-tauri/target/release/bundle/macos/PDF Compress.app"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PDF-Compress-macOS
+          path: src-tauri/target/release/bundle/dmg/*.dmg
+          if-no-files-found: error
