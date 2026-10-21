@@ -1,0 +1,43 @@
+# Projet Xcode généré par XcodeGen : `brew install xcodegen && xcodegen` dans ce dossier.
+name: PDFCompress
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  developmentLanguage: fr
+settings:
+  base:
+    MARKETING_VERSION: "2.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  PDFCompress:
+    type: application
+    platform: macOS
+    sources:
+      - path: PDFCompress
+        excludes: ["*.entitlements", "Info.plist", "*.h"]
+    scheme: {}
+    preBuildScripts:
+      - name: Moteur Rust
+        script: '"$PROJECT_DIR/../scripts/build-engine.sh"'
+        basedOnDependencyAnalysis: false
+    settings:
+      base:
+        PRODUCT_NAME: PDF Compress
+        PRODUCT_BUNDLE_IDENTIFIER: fr.sylvainrobert.pdfcompress
+        INFOPLIST_FILE: PDFCompress/Info.plist
+        CODE_SIGN_ENTITLEMENTS: PDFCompress/PDFCompress.entitlements
+        # Le Hardened Runtime est appliqué à la signature Developer ID (scripts/sign-and-notarize.sh).
+        ENABLE_HARDENED_RUNTIME: NO
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        ARCHS: arm64
+        SWIFT_VERSION: "5.0"
+        SWIFT_OBJC_BRIDGING_HEADER: PDFCompress/Bridging-Header.h
+        HEADER_SEARCH_PATHS: $(PROJECT_DIR)/../engine/include
+        # Dossier de libgs (Homebrew par défaut) ; surchargeable : xcodebuild GS_LIB_DIR=…
+        GS_LIB_DIR: /opt/homebrew/lib
+        LIBRARY_SEARCH_PATHS: $(PROJECT_DIR)/../engine/target/aarch64-apple-darwin/release $(GS_LIB_DIR)
+        OTHER_LDFLAGS: -lpdfcompress_engine -lgs
+        # En développement, l'application signe localement ; la version distribuée est
+        # signée Developer ID par scripts/sign-and-notarize.sh.
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual

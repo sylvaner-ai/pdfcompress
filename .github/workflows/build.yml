@@ -7,46 +7,65 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    name: Tests du moteur
+  engine:
+    name: Tests du moteur Rust
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
     steps:
       - uses: actions/checkout@v7
-      - name: Dépendances système
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ghostscript libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev
+      - name: Ghostscript (bibliothèque)
+        run: sudo apt-get update && sudo apt-get install -y libgs-dev ghostscript
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: engine
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
-        working-directory: src-tauri
 
   macos:
     name: Application macOS
-    needs: test
+    needs: engine
     runs-on: macos-latest
+    env:
+      APP: app/build/Build/Products/Release/PDF Compress.app
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
-      - run: brew install ghostscript dylibbundler
-      - run: npm ci
-      - name: Préparer Ghostscript embarqué
-        run: scripts/bundle-ghostscript.sh
+          workspaces: engine
+      - run: brew install ghostscript dylibbundler xcodegen
+      - name: Tests du moteur sur macOS
+        run: cargo test --manifest-path engine/Cargo.toml
+      - name: Générer le projet Xcode
+        run: xcodegen
+        working-directory: app
       - name: Construire l'application
-        run: npm run tauri build -- --config "$PWD/src-tauri/tauri.bundle-gs.conf.json"
-      - name: Vérifier Ghostscript dans l'application (sans Homebrew)
-        run: scripts/check-bundled-gs.sh "src-tauri/target/release/bundle/macos/PDF Compress.app"
+        run: |
+          xcodebuild -project app/PDFCompress.xcodeproj -scheme PDFCompress -configuration Release \
+            -derivedDataPath app/build GS_LIB_DIR="$(brew --prefix)/lib" build
+      - name: Embarquer Ghostscript
+        run: scripts/bundle-ghostscript.sh "$APP"
+      - name: Vérifier la compression avec le Ghostscript embarqué (sans Homebrew)
+        run: scripts/check-bundle.sh "$APP"
+      - name: Signer, notariser et créer le .dmg
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
+          APPSTORE_API_KEY_P8: ${{ secrets.APPSTORE_API_KEY_P8 }}
+        run: scripts/package.sh "$APP" "PDF-Compress.dmg"
       - uses: actions/upload-artifact@v7
         with:
           name: PDF-Compress-macOS
-          path: src-tauri/target/release/bundle/dmg/*.dmg
+          path: PDF-Compress.dmg
           if-no-files-found: error

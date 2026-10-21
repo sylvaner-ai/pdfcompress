@@ -1,5 +1,6 @@
-node_modules/
-src-tauri/target/
-src-tauri/gen/
-src-tauri/gs-dist/
+engine/target/
+app/build/
+app/PDFCompress.xcodeproj/
+gs-dist/
 .DS_Store
+xcuserdata/
