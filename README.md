@@ -5,7 +5,7 @@ Petite application macOS pour compresser des fichiers PDF par glisser-déposer, 
 - Déposez un ou plusieurs PDF (ou des dossiers) dans la fenêtre ou sur l'icône de l'application : ils sont compressés **sur place**, sans copie ni question.
 - L'original n'est remplacé que si le résultat est plus léger ; le remplacement passe par un fichier temporaire et un renommage atomique, l'original n'est donc jamais laissé à moitié écrit. Un PDF protégé par mot de passe est laissé intact.
 - Niveau par défaut **Équilibré** (images à 150 dpi, qualité JPEG 70). Les préférences (⌘,) proposent Forte, Légère ou des réglages personnalisés.
-- L'action **Compresser des PDF** est disponible dans l'app Raccourcis, avec les mêmes réglages.
+- Une Action rapide du Finder compresse les PDF sélectionnés sans ouvrir la fenêtre, avec les mêmes réglages.
 
 L'interface est en SwiftUI ; le moteur, en Rust, pilote [Ghostscript](https://www.ghostscript.com/) en tant que bibliothèque, embarquée dans l'application : rien à installer.
 
@@ -18,10 +18,17 @@ L'application cible les Mac à puce Apple sous macOS 14 ou plus récent. Elle es
 
 ## Action rapide du Finder
 
-1. Ouvrez l'app **Raccourcis** et créez un raccourci.
-2. Ajoutez l'action **Compresser des PDF** (catégorie Apps → PDF Compress).
-3. Dans le panneau d'informations du raccourci (ⓘ), cochez **Utiliser comme action rapide** et **Finder**, et réglez l'entrée reçue sur **Fichiers PDF**.
-4. Dans le Finder, sélectionnez des PDF puis clic droit → **Actions rapides** → votre raccourci.
+Méthode recommandée, qui fonctionne sans signature Apple :
+
+1. Ouvrez l'app **Raccourcis** et créez un raccourci nommé par exemple « Compresser avec PDF Compress ».
+2. Dans son panneau d'informations (ⓘ), cochez **Utiliser comme action rapide** et **Finder**, et réglez l'entrée reçue sur **Fichiers PDF** et **Dossiers**.
+3. Ajoutez l'action **Exécuter un script shell**, choisissez **Transmettre l'entrée : comme arguments**, et collez le contenu de [scripts/action-rapide.sh](scripts/action-rapide.sh).
+4. Dans le Finder, sélectionnez des PDF ou des dossiers, puis clic droit → **Actions rapides** → votre raccourci. Un message « Compression terminée » résume le gain.
+
+Le script appelle le mode ligne de commande de l'application, utilisable aussi dans le Terminal :
+`"/Applications/PDF Compress.app/Contents/MacOS/PDF Compress" --compress fichier.pdf dossier…`
+
+L'action **Compresser des PDF** est aussi proposée directement dans Raccourcis (App Intents). Si Raccourcis indique ne pas pouvoir communiquer avec l'app, utilisez la méthode ci-dessus.
 
 ## Développer
 
