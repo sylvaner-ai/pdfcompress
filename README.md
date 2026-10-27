@@ -23,7 +23,7 @@ Méthode recommandée, qui fonctionne sans signature Apple :
 1. Ouvrez l'app **Raccourcis** et créez un raccourci nommé par exemple « Compresser avec PDF Compress ».
 2. Dans son panneau d'informations (ⓘ), cochez **Utiliser comme action rapide** et **Finder**, et réglez l'entrée reçue sur **Fichiers PDF** et **Dossiers**.
 3. Ajoutez l'action **Exécuter un script shell**, choisissez **Transmettre l'entrée : comme arguments**, et collez le contenu de [scripts/action-rapide.sh](scripts/action-rapide.sh).
-4. Dans le Finder, sélectionnez des PDF ou des dossiers, puis clic droit → **Actions rapides** → votre raccourci. Une notification résume le gain.
+4. Dans le Finder, sélectionnez des PDF ou des dossiers, puis clic droit → **Actions rapides** → votre raccourci. Un message « Compression terminée » résume le gain.
 
 Le script appelle le mode ligne de commande de l'application, utilisable aussi dans le Terminal :
 `"/Applications/PDF Compress.app/Contents/MacOS/PDF Compress" --compress fichier.pdf dossier…`
